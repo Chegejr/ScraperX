@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
 import time
 import pandas as pd
@@ -17,17 +18,19 @@ service = Service(executable_path="chromedriver.exe")
 driver = webdriver.Chrome(service=service)
 username = 742866249
 password = "blackdolphin"
+previous_value = None
 data_list = [] # Create an empty list to store the data
-
+bet_amount_xpath = "//div[@class='game-container']//div[@class='game-controls']//div[@class='game-info']//span[@class='ng-star-inserted']"
+multiplier_css_selector = "div.payouts-block app-bubble-multiplier div[appcoloredmultiplier].bubble-multiplier"
 def parse_dynamic_content(driver):
     data = []
     bet_items = driver.find_elements(By.CSS_SELECTOR, "app-bet-item")
     for bet_item in bet_items:
-        username = bet_item.find_element(By.CSS_SELECTOR, "div.username").text
+        usernamem = bet_item.find_element(By.CSS_SELECTOR, "div.username").text
         bet_amount = bet_item.find_element(By.CSS_SELECTOR, "app-bet-amount > div").text
         if bet_amount.isdigit():
             data.append({
-                "username": username,
+                "username": usernamem,
                 "bet_amount": int(bet_amount)
             })
     return data
@@ -50,7 +53,7 @@ try:
     print("Locator found")
     login_button.click()
     print("Login successful")
-    # wait = WebDriverWait(driver, 5)
+    wait = WebDriverWait(driver, 5)
 
      # Handle the pop-up
     try:
@@ -65,15 +68,33 @@ try:
 except:
     print("Locator not found")
     driver.quit()
+wait = WebDriverWait(driver, 5)
+print("Everything is okay up to here!")
+
 # Now up to this point, we should be logged in  to our target website where we should be able to collect the data
 # print("We now getting started. Wait for 15 seconds")
-
-wait = WebDriverWait(driver, 10)
-initial_page_source = driver.page_source # Get the initial page source
 while True:
-    parse_dynamic_content(driver)
-    # Create a DataFrame from the collected data
-    # df = pd.DataFrame(data_list, columns=['Value'])
-    # print(df)
+    try:
+        wait = WebDriverWait(driver, 5)
+        parent_div = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.payouts-block"))) # Find the parent div element
+        print("The 'payouts-block' div element was found on the page!")
+        
+        # wait = WebDriverWait(driver, 3)
+        # # Find all child elements with the same identifier (app-bubble-multiplier)
+        # child_elements = wait.until(lambda d: parent_div.find_elements(By.TAG_NAME, "app-bubble-multiplier"))
 
+        # # Create an empty list to store the values
+        # values = []
+
+        # # Loop through each child element and extract its text content
+        # for child in child_elements:
+        #     value_div = child.find_element(By.CSS_SELECTOR, "div[appcoloredmultiplier].bubble-multiplier")
+        #     value = value_div.text
+        #     values.append(value)
+
+        # print(values)  # Output: ['10.29x', '4.03x', '1.38x', '2.09x']
+    except TimeoutException:
+        print("Timeout occurred while waiting for elements to load.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
