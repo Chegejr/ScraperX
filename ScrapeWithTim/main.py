@@ -20,8 +20,6 @@ username = 742866249
 password = "blackdolphin"
 previous_value = None
 data_list = [] # Create an empty list to store the data
-bet_amount_xpath = "//div[@class='game-container']//div[@class='game-controls']//div[@class='game-info']//span[@class='ng-star-inserted']"
-multiplier_css_selector = "div.payouts-block app-bubble-multiplier div[appcoloredmultiplier].bubble-multiplier"
 def parse_dynamic_content(driver):
     data = []
     bet_items = driver.find_elements(By.CSS_SELECTOR, "app-bet-item")
@@ -61,6 +59,32 @@ try:
         popup_cancel_button.click()
     except:
         print("No pop-up found. ")
+    print("Everything is okay up to here!")
+    print(driver.page_source)
+
+    while True:
+        wait = WebDriverWait(driver, 6)
+        try:
+            payouts_block = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.payouts-block")))
+
+            # Find all "app-bubble-multiplier" elements within the "payouts-block" div
+            multiplier_elements = payouts_block.find_elements(By.CSS_SELECTOR, "app-bubble-multiplier")
+
+            # Extract the multiplier values from each "app-bubble-multiplier" element
+            multiplier_values = []
+            for multiplier_element in multiplier_elements:
+                value_div = multiplier_element.find_element(By.CSS_SELECTOR, "div[appcoloredmultiplier].bubble-multiplier")
+                multiplier_value = value_div.text
+                multiplier_values.append(multiplier_value)
+
+            # Print the extracted multiplier values
+            print("Multiplier Values:")
+            for value in multiplier_values:
+                print(value)
+        except TimeoutException:
+            print("Timeout occurred while waiting for elements to load.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
     # window_after = driver.window_handles[1]  # Switch to the new window
     # driver.switch_to.window(window_after)
 
@@ -68,33 +92,6 @@ try:
 except:
     print("Locator not found")
     driver.quit()
-wait = WebDriverWait(driver, 5)
-print("Everything is okay up to here!")
 
-# Now up to this point, we should be logged in  to our target website where we should be able to collect the data
-# print("We now getting started. Wait for 15 seconds")
-while True:
-    try:
-        wait = WebDriverWait(driver, 5)
-        parent_div = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.payouts-block"))) # Find the parent div element
-        print("The 'payouts-block' div element was found on the page!")
-        
-        # wait = WebDriverWait(driver, 3)
-        # # Find all child elements with the same identifier (app-bubble-multiplier)
-        # child_elements = wait.until(lambda d: parent_div.find_elements(By.TAG_NAME, "app-bubble-multiplier"))
 
-        # # Create an empty list to store the values
-        # values = []
-
-        # # Loop through each child element and extract its text content
-        # for child in child_elements:
-        #     value_div = child.find_element(By.CSS_SELECTOR, "div[appcoloredmultiplier].bubble-multiplier")
-        #     value = value_div.text
-        #     values.append(value)
-
-        # print(values)  # Output: ['10.29x', '4.03x', '1.38x', '2.09x']
-    except TimeoutException:
-        print("Timeout occurred while waiting for elements to load.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
